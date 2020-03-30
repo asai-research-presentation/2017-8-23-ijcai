@@ -134,7 +134,10 @@ We tried a trivial approach with A*
 
 ** A* vs DEA*
 
-#+HTML: <embed src="img/dea/astar.svg" type="image/svg+xml"  />
+# file missing
+# #+HTML: <embed src="img/dea/astar.svg" type="image/svg+xml"  />
+
+[[png:dea/final]]
 
 ** Some properties
 
