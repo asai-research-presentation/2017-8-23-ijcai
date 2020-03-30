@@ -7,9 +7,6 @@
 #+LINK: spng file:img/static/%s.png
 #+LINK: sjpg file:img/static/%s.jpg
 
-#+html_head: <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:500,900">
-#+html_head_extra:
-
 #+begin_outline-text-1
 
 #+begin_center
@@ -87,36 +84,13 @@ Example 2: Multiple Worker Routing Problem (*Our main problem of interest*)
 # | Montpellier | 152,949                            | 161,768  | 1,297 |     36 | 3,988     |
 # | Rome        | 522,529                            | 566,400  | 8,896 |    391 | 39,422    |
 
-** DIJA Multi-modal Journey Planning Solver [Botea et.al. 2013]
-
-# + $\tau$ *is not known apriori*, should be computed dynamically
-+ DIJA solver computes each query $\tau(x,y,t)$
-+ DIJA could take ~100 seconds for each query (in the worst case)
-+ Brute force precomputation of $\tau(x,y,t)\;$ is impractical, given the large number of queries
-
-#+begin_center
-|             | <c>                                |
-| City        | Num. locations in the roadmap data |
-|-------------+------------------------------------|
-| Dublin      | 301,638                            |
-| Montpellier | 152,949                            |
-| Rome        | 522,529                            |
-#+end_center
-
-# | city        | Num. locations in the roadmap data | segments | stops | routes | trips/day |
-# |-------------+------------------------------------+----------+-------+--------+-----------|
-# | Dublin      | 301,638                            | 319,846  | 4,739 |    120 | 7,308     |
-# | Montpellier | 152,949                            | 161,768  | 1,297 |     36 | 3,988     |
-# | Rome        | 522,529                            | 566,400  | 8,896 |    391 | 39,422    |
-
-
 ** NP-hardness results                                                 :skip:
 
 Decision problem (is the total delay below some D ?)
 
 Reduction from Single Machine Total Tardiness Problem (SMTTP) (Du and Leung 1990)
 
-(Detail omitted due to time constraints)
+*(Detail omitted due to time constraints)*
 
 * Initial Results: Search performance "does not matter"
 
@@ -127,7 +101,7 @@ We tried a trivial approach with A*
 + Evaluate the edge cost using DIJA for computing g() value of A*
   + The results of DIJA are cached
     + the same edge is never computed twice
-  + In most problems *90% of the runtime* is spent by DIJA
++ In most problems *90% of the runtime* is spent by DIJA
   + *The /true bottleneck/ = edge cost computation!*
 #+end_span8
 #+begin_span4
@@ -148,7 +122,7 @@ We tried a trivial approach with A*
 #+begin_container-fluid
 #+begin_row-fluid
 #+begin_span6
-png:dea/lower-bound]]
+[[png:dea/lower-bound]]
 #+end_span6
 #+begin_span6
 + This applies to most of the *hierarchical problems*,
@@ -237,7 +211,7 @@ up to *x30* times ($C=1$), typically *x6.5* (average), at least x1.7 (min.)
 
 Partial Expansion A* (Yoshizumi et.al. '00, Goldenberg et.al. '14)
 
-→ expands *all* successors (= requires every edge cost)
+→ Expands *all* successors (= requires every edge cost)
 
 → *Discard* some successors (reduce the memory usage)
 
