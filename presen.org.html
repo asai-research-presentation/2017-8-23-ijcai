@@ -1,0 +1,658 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-08-22 火 12:06 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="viewport" content="width=device-width, initial-scale=1" />
+<title>Efficient Optimal Search under Expensive Edge Cost Computation</title>
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="Masataro Asai" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="css/layout.css" />
+<link rel="stylesheet" type="text/css" href="css/default.css" />
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/jquery.loupe.min.js"></script>
+<script type="text/javascript" src="js/jgestures/jgestures.min.js"></script>
+<script type="text/javascript" src="js/code.js"></script>
+<script type="text/javascript" src="MathJax/MathJax.js"></script>
+<script type="text/javascript" src="js/mathjaxconf.js"></script>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Efficient Optimal Search under Expensive Edge Cost Computation</h1>
+<div class="outline-text-1">
+<p>
+
+</p>
+
+<div class="org-center">
+<p>
+Masataro Asai (U Tokyo)
+</p>
+
+<p>
+Akihiro Kishimoto, Adi Botea, Radu Marinescu, Elizabeth M. Daly, Spyros Kotoulas
+</p>
+
+<p>
+(IBM Research Ireland)
+</p>
+</div>
+
+<p>
+15min including Q&amp;A: 12 min?
+</p>
+
+<p>
+paper id: 3047
+</p>
+
+</div>
+
+<div id="outline-container-orgheadline1" class="outline-2">
+<h2 id="orgheadline1"><span class="section-number-2">1</span> Domains where edge-costs are not known apriori</h2>
+<div class="outline-text-2" id="text-1">
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span9">
+<p>
+Example 1: <b>TSP with unknown edge costs</b>
+</p>
+
+<ul class="org-ul">
+<li><b>Edge cost</b> = pairwise distance between cities
+<ul class="org-ul">
+<li>given apriori in the standard setting</li>
+</ul></li>
+</ul>
+
+</div>
+<div class="span3">
+
+<div class="figure">
+<p><img src="img/TSP-with-weights.png" alt="TSP-with-weights.png" />
+</p>
+</div>
+
+</div>
+
+</div>
+<div class="row-fluid">
+<div class="span9">
+<ul class="org-ul">
+<li>However, when the edge cost is <b>NOT given</b> &#x2026;
+<ul class="org-ul">
+<li>Solve <b>O(N<sup>2</sup>) shortest path problems (all pairs of cities)</b></li>
+<li><b>before</b> solving the TSP itself (N: number of cities)</li>
+</ul></li>
+</ul>
+
+</div>
+<div class="span3">
+
+<div class="figure">
+<p><img src="img/TSP-without-weights.png" alt="TSP-without-weights.png" />
+</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="larger">
+<ul class="org-ul">
+<li><b>Practically, edge cost computation could dominate the search time.</b></li>
+</ul>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline4" class="outline-2">
+<h2 id="orgheadline4"><span class="section-number-2">2</span> Domains where edge-costs are not known apriori</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Example 2: Multiple Worker Routing Problem (<b>Our main problem of interest</b>)
+</p>
+
+
+<div class="figure">
+<p><img src="img/mwrp.png" alt="mwrp.png" />
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">2.1</span> Multiple Worker Routing Problem (MWRP)</h3>
+<div class="outline-text-3" id="text-2-1">
+<ul class="org-ul">
+<li>Worker initial locations $w_j$, patients locations $p_i$, <b>visit all patients</b></li>
+<li>Appointment time $a_i$, arrival time $t_i$, <b>minimize the sum of delays</b> $\sum \max(0, t_i - a_i)$</li>
+<li>Travel time function $\tau(x,y,t)$　where $x,y$are locations, $t$is departure time
+<ul class="org-ul">
+<li>More buses in the rush hour, fewer buses around noon</li>
+</ul></li>
+<li>DIJA Multi-modal Journey Planning Solver [Botea et.al. 2013] for computing $\tau$
+<ul class="org-ul">
+<li>DIJA could take ~100 seconds for each query (in the worst case)</li>
+<li>Brute force precomputation of $\tau(x,y,t)\;$is impractical, given the large number of queries</li>
+</ul></li>
+</ul>
+
+<div class="org-center">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-center" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">City</th>
+<th scope="col" class="org-center">Num. locations in the roadmap data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Dublin</td>
+<td class="org-center">301,638</td>
+</tr>
+
+<tr>
+<td class="org-left">Montpellier</td>
+<td class="org-center">152,949</td>
+</tr>
+
+<tr>
+<td class="org-left">Rome</td>
+<td class="org-center">522,529</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline3" class="outline-3">
+<h3 id="orgheadline3"><span class="section-number-3">2.2</span> NP-hardness results&#xa0;&#xa0;&#xa0;<span class="tag"><span class="skip">skip</span></span></h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Decision problem (is the total delay below some D ?)
+</p>
+
+<p>
+Reduction from Single Machine Total Tardiness Problem (SMTTP) (Du and Leung 1990)
+</p>
+
+<p>
+<b>(Detail omitted due to time constraints)</b>
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline5" class="outline-2">
+<h2 id="orgheadline5"><span class="section-number-2">3</span> Initial Results: Search performance "does not matter"</h2>
+<div class="outline-text-2" id="text-3">
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span8">
+<p>
+We tried a trivial approach with A*
+</p>
+<ul class="org-ul">
+<li>Evaluate the edge cost using DIJA for computing g() value of A*
+<ul class="org-ul">
+<li>The results of DIJA are cached
+<ul class="org-ul">
+<li>the same edge is never computed twice</li>
+</ul></li>
+</ul></li>
+<li>In most problems <b>90% of the runtime</b> is spent by DIJA
+<ul class="org-ul">
+<li><b>The <i>true bottleneck</i> = edge cost computation!</b></li>
+</ul></li>
+</ul>
+
+</div>
+<div class="span4">
+
+<div class="figure">
+<p><img src="img/astar.png" alt="astar.png" />
+</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-2">
+<h2 id="orgheadline8"><span class="section-number-2">4</span> Delayed Expansion A* (DEA*)</h2>
+<div class="outline-text-2" id="text-4">
+<ul class="org-ul">
+<li>The edge cost is computed by an <b>external solver</b>, is <b>expensive</b>
+<ul class="org-ul">
+<li><b>Our idea</b>: <b>Delay</b> the <b><i>full edge evaluation</i></b>, only <span class="underline"><i>partially</i></span> evaluate the cost</li>
+</ul></li>
+<li>Getting the <b>lower bound</b> <span class="underline"><i>c<sub>h</sub></i></span> of the edge cost <b><i>c<sub>a</sub></i></b> from the external solver
+<ul class="org-ul">
+<li>Because the <b>external solver itself is a search algorithm</b> (DIJA is a AO* solver)</li>
+</ul></li>
+<li>Insert a <span class="underline"><i>temporary node</i></span> whose $g(node) = g(parent) + c_h(node, parent)$</li>
+<li><b><i>Fully evaluate the edge cost</i></b> <b>only when</b> it is necessary; reinsert the node</li>
+</ul>
+
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span6">
+
+<div class="figure">
+<p><img src="img/dea/lower-bound.png" alt="lower-bound.png" />
+</p>
+</div>
+
+</div>
+<div class="span6">
+<ul class="org-ul">
+<li>This applies to most of the <b>hierarchical problems</b>,
+<ul class="org-ul">
+<li>transportation (like MWRP)</li>
+<li>motion planning (local path vs high-level task)</li>
+</ul></li>
+</ul>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
+<div id="outline-container-orgheadline6" class="outline-3">
+<h3 id="orgheadline6"><span class="section-number-3">4.1</span> A* vs DEA*</h3>
+<div class="outline-text-3" id="text-4-1">
+<embed src="img/dea/astar.svg" type="image/svg+xml"  />
+</div>
+</div>
+
+<div id="outline-container-orgheadline7" class="outline-3">
+<h3 id="orgheadline7"><span class="section-number-3">4.2</span> Some properties</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+DEA* maintains the same expansion order as A*
+</p>
+
+<p>
+The results are thus optimal w/ admissible heuristics
+</p>
+
+<p>
+May cause x2 OPEN list operations
+</p>
+
+<p>
+Actual performance also depends on the caching mechanisms
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline11" class="outline-2">
+<h2 id="orgheadline11"><span class="section-number-2">5</span> Experimental Results on MWRP&#xa0;&#xa0;&#xa0;<span class="tag"><span class="no_time_to_describe_the_detail">no_time_to_describe_the_detail</span></span></h2>
+<div class="outline-text-2" id="text-5">
+<p>
+180 MWRP instances, 3 cities, 6/12 workers, 8/24 patients, one-hour schedule
+</p>
+
+<p>
+P and W are selected in the 2km radius of the city center
+</p>
+
+<p>
+Random appointment time
+</p>
+
+<p>
+Using blind, h<sup>1</sup> and h<sup>2</sup> heuristics (computed with c<sub>h</sub> )
+</p>
+
+<p>
+1 hr runtime, 1.5 million node
+</p>
+
+<div class="org-center">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-center" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">City</th>
+<th scope="col" class="org-center">Num. locations in the roadmap data</th>
+<th scope="col" class="org-left">Map diameter</th>
+<th scope="col" class="org-left">&#xa0;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Dublin</td>
+<td class="org-center">301,638</td>
+<td class="org-left">10km</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Montpellier</td>
+<td class="org-center">152,949</td>
+<td class="org-left">6km</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">Rome</td>
+<td class="org-center">522,529</td>
+<td class="org-left">10km</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-3">
+<h3 id="orgheadline9"><span class="section-number-3">5.1</span> Results</h3>
+<div class="outline-text-3" id="text-5-1">
+
+<div class="figure">
+<p><img src="img/results1.png" alt="results1.png" />
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline10" class="outline-3">
+<h3 id="orgheadline10"><span class="section-number-3">5.2</span> External Runtime comparison (time spent on DIJA)</h3>
+<div class="outline-text-3" id="text-5-2">
+
+<div class="figure">
+<p><img src="img/results2.png" alt="results2.png" />
+</p>
+</div>
+
+<p>
+DEA* spends less runtime on the external calls
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline13" class="outline-2">
+<h2 id="orgheadline13"><span class="section-number-2">6</span> Classical Planning Results</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Domain-independent scenario
+</p>
+
+<ul class="org-ul">
+<li>Classical Planning domains : <b>assumes edge costs</b></li>
+<li><b>Simulated domains</b> where the costs should be dynamically computed
+<ul class="org-ul">
+<li>$c_h = c_a - C\;$for some constant $C\;$(almost perfect heuristics)</li>
+</ul></li>
+<li>Measure the number of $c_a$computation (insertion of OPEN nodes)</li>
+</ul>
+
+<blockquote>
+<p>
+barman, cybersec, elevators, floortile, openstacks, parcprinter, pegsol,
+scanalyzer, sokoban, transport and woodworking
+</p>
+</blockquote>
+
+<div class="alignright">
+<p>
+(cf. <b>state dependent action costs</b>)
+</p>
+
+</div>
+</div>
+
+<div id="outline-container-orgheadline12" class="outline-3">
+<h3 id="orgheadline12"><span class="section-number-3">6.1</span> Results</h3>
+<div class="outline-text-3" id="text-6-1">
+<div class="alignright">
+<p>
+(30min, 4GB)
+</p>
+
+</div>
+
+<p>
+Depending on $C\;$, DEA* could reduce the <b><i>full edge cost evaluation</i></b> 
+</p>
+
+<p>
+up to <b>x30</b> times ($C=1$), typically <b>x6.5</b> (average), at least x1.7 (min.)
+</p>
+
+
+<div class="figure">
+<p><img src="img/results3.png" alt="results3.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline14" class="outline-2">
+<h2 id="orgheadline14"><span class="section-number-2">7</span> Related work: PEA* motivation does not apply to this problem</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+Partial Expansion A* (Yoshizumi et.al. '00, Goldenberg et.al. '14)
+</p>
+
+<p>
+→ Expands <b>all</b> successors (= requires every edge cost)
+</p>
+
+<p>
+→ <b>Discard</b> some successors (reduce the memory usage)
+</p>
+
+<p>
+→ Addresses the high branching factor in MSA (Multiple Sequence Alignment)
+</p>
+
+<p>
+　
+</p>
+
+<p>
+　
+</p>
+
+<p>
+<b>Does not</b> address unknown/expensive edge costs (e.g. costs are given in MSA)
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline15" class="outline-2">
+<h2 id="orgheadline15"><span class="section-number-2">8</span> Conclusion</h2>
+<div class="outline-text-2" id="text-8">
+<div class="larger">
+<p>
+Introduction and NP-hardness (skipped) of MWRP
+</p>
+
+<p>
+The bottleneck of solving MWRP is the <b>external calls</b> to obtain the edge cost
+</p>
+
+<p>
+DEA* reduces the <b>full calls</b> to the external solver by
+</p>
+
+<p>
+<span class="underline"><i>temporary nodes</i></span> , g = g(parent) + <span class="underline"><i>c<sub>h</sub>, the lower bound</i></span> of <b><i>c<sub>a</sub></i></b> (actual cost)
+</p>
+
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Masataro Asai</p>
+<p class="date">Created: 2017-08-22 火 12:06</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
