@@ -66,10 +66,26 @@ Example 2: Multiple Worker Routing Problem (*Our main problem of interest*)
 
 + Worker initial locations $w_j$, patients locations $p_i$, *visit all patients*
 + Appointment time $a_i$, arrival time $t_i$, *minimize the sum of delays* $\sum \max(0, t_i - a_i)$
-+ Travel time function $\tau(x,y,t)$ 　where $x,y \in P\cap W$
-  + $\tau$ 　depends on the *departure time* $t$
-    + (e.g. more buses in the morning, fewer around noon)
-  + Input size: $|\text{Num. locations}|\cdot|t|$, where $|t|\in [0, 86400 = 24\cdot 60 \cdot 60]$
++ Travel time function $\tau(x,y,t)$ 　where $x,y$ are locations, $t$ is departure time
+  + More buses in the rush hour, fewer buses around noon
++ DIJA Multi-modal Journey Planning Solver [Botea et.al. 2013] for computing $\tau$
+  + DIJA could take ~100 seconds for each query (in the worst case)
+  + Brute force precomputation of $\tau(x,y,t)\;$ is impractical, given the large number of queries
+
+#+begin_center
+|             | <c>                                |
+| City        | Num. locations in the roadmap data |
+|-------------+------------------------------------|
+| Dublin      | 301,638                            |
+| Montpellier | 152,949                            |
+| Rome        | 522,529                            |
+#+end_center
+
+# | city        | Num. locations in the roadmap data | segments | stops | routes | trips/day |
+# |-------------+------------------------------------+----------+-------+--------+-----------|
+# | Dublin      | 301,638                            | 319,846  | 4,739 |    120 | 7,308     |
+# | Montpellier | 152,949                            | 161,768  | 1,297 |     36 | 3,988     |
+# | Rome        | 522,529                            | 566,400  | 8,896 |    391 | 39,422    |
 
 ** DIJA Multi-modal Journey Planning Solver [Botea et.al. 2013]
 
@@ -107,12 +123,12 @@ Reduction from Single Machine Total Tardiness Problem (SMTTP) (Du and Leung 1990
 #+begin_container-fluid
 #+begin_row-fluid
 #+begin_span8
-+ Trivial approach with A*
-  + Evaluate the edge cost using external solver DIJA
-  + Use the edge cost for computing g() value of A*
-  + The results of DIJA are cached (the same edge is never computed twice)
-+ *90% of the runtime* is spent on DIJA
-  + *The /true bottleneck/ is in the edge cost computation!*
+We tried a trivial approach with A*
++ Evaluate the edge cost using DIJA for computing g() value of A*
+  + The results of DIJA are cached
+    + the same edge is never computed twice
+  + In most problems *90% of the runtime* is spent by DIJA
+  + *The /true bottleneck/ = edge cost computation!*
 #+end_span8
 #+begin_span4
 [[png:astar]]
@@ -122,12 +138,100 @@ Reduction from Single Machine Total Tardiness Problem (SMTTP) (Du and Leung 1990
 
 * Delayed Expansion A* (DEA*)
 
-+ When the edge cost is computed by an external solver,
-+ *Why don't you grab some additional information from it?*
-+ This applies to most of the *hierarchical problems*,
-  + including transportation (like MWRP), motion planning (local path vs high-level task)
++ The edge cost is computed by an *external solver*, is *expensive*
+  + *Our idea*: *Delay* the */full edge evaluation/*, only _/partially/_ evaluate the cost
++ Getting the *lower bound* _/c_h/_ of the edge cost */c_a/* from the external solver
+  + Because the *external solver itself is a search algorithm* (DIJA is a AO* solver)
++ Insert a _/temporary node/_ whose $g(node) = g(parent) + c_h(node, parent)$
++ */Fully evaluate the edge cost/* *only when* it is necessary; reinsert the node
 
-* 
+#+begin_container-fluid
+#+begin_row-fluid
+#+begin_span6
+png:dea/lower-bound]]
+#+end_span6
+#+begin_span6
++ This applies to most of the *hierarchical problems*,
+  + transportation (like MWRP)
+  + motion planning (local path vs high-level task)
+#+end_span6
+#+end_row-fluid
+#+end_container-fluid
+
+** A* vs DEA*
+
+#+HTML: <embed src="img/dea/astar.svg" type="image/svg+xml"  />
+
+** Some properties
+
+DEA* maintains the same expansion order as A*
+
+The results are thus optimal w/ admissible heuristics
+
+May cause x2 OPEN list operations
+
+Actual performance also depends on the caching mechanisms
+
+* Experimental Results on MWRP                   :no_time_to_describe_the_detail:
+
+180 MWRP instances, 3 cities, 6/12 workers, 8/24 patients, one-hour schedule
+
+P and W are selected in the 2km radius of the city center
+
+Random appointment time
+
+Using blind, h^1 and h^2 heuristics (computed with c_h )
+
+1 hr runtime, 1.5 million node
+
+#+begin_center
+|             | <c>                                |              |   |
+| City        | Num. locations in the roadmap data | Map diameter |   |
+|-------------+------------------------------------+--------------+---|
+| Dublin      | 301,638                            | 10km         |   |
+| Montpellier | 152,949                            | 6km          |   |
+| Rome        | 522,529                            | 10km         |   |
+#+end_center
+
+** Results
+
+[[png:results1]]
+
+** External Runtime comparison (time spent on DIJA)
+
+[[png:results2]]
+
+DEA* spends less runtime on the external calls
+
+* Classical Planning Results
+
+Domain-independent scenario
+
++ Classical Planning domains : *assumes edge costs*
++ *Simulated domains* where the costs should be dynamically computed
+  + $c_h = c_a - C\;$ for some constant $C\;$ (almost perfect heuristics)
++ Measure the number of $c_a$ computation (insertion of OPEN nodes)
+
+#+begin_quote
+barman, cybersec, elevators, floortile, openstacks, parcprinter, pegsol,
+scanalyzer, sokoban, transport and woodworking
+#+end_quote
+
+#+begin_alignright
+(cf. *state dependent action costs*)
+#+end_alignright
+
+** Results
+
+#+begin_alignright
+(30min, 4GB)
+#+end_alignright
+
+Depending on $C\;$, DEA* could reduce the */full edge cost evaluation/* 
+
+up to *x30* times ($C=1$), typically *x6.5* (average), at least x1.7 (min.)
+
+[[png:results3]]
 
 * Related work: PEA* motivation does not apply to this problem
 
@@ -135,16 +239,25 @@ Partial Expansion A* (Yoshizumi et.al. '00, Goldenberg et.al. '14)
 
 → expands *all* successors (= requires every edge cost)
 
-→ discard some successors, in order to reduce memory usage
+→ *Discard* some successors (reduce the memory usage)
 
 → Addresses the high branching factor in MSA (Multiple Sequence Alignment)
 
+　
 
-* Experimental Results
+　
 
+*Does not* address unknown/expensive edge costs (e.g. costs are given in MSA)
 
-* Classical Planning Results
+* Conclusion
 
+#+begin_larger
+Introduction and NP-hardness (skipped) of MWRP
 
-* Implication
+The bottleneck of solving MWRP is the *external calls* to obtain the edge cost
+
+DEA* reduces the *full calls* to the external solver by
+
+_/temporary nodes/_ , g = g(parent) + _/c_h, the lower bound/_ of */c_a/* (actual cost)
+#+end_larger
 
