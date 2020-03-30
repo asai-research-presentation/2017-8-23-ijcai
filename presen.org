@@ -1,4 +1,4 @@
-#+title: Yet Another Org-mode Presentation Script
+#+title: Efficient Optimal Search under Expensive Edge Cost Computation
 #+author: Masataro Asai
 #+include: "head.org"
 #+LINK: img file:img/%s
@@ -11,30 +11,133 @@
 #+html_head_extra:
 
 #+begin_outline-text-1
-#+begin_xlarge
-#+begin_center
-Efficient Optimal Search under Expensive Edge Cost Computation
-#+end_center
-#+end_xlarge
 
 #+begin_center
 Masataro Asai (U Tokyo)
 
-Akihiro Kishimoto, Adi Botea, Radu Marinescu, Elizabeth M. Daly, Spyros Kotoulas (IBM Research Ireland)
+Akihiro Kishimoto, Adi Botea, Radu Marinescu, Elizabeth M. Daly, Spyros Kotoulas
+
+(IBM Research Ireland)
 #+end_center
+
+15min including Q&A: 12 min?
+
+paper id: 3047
 
 #+end_outline-text-1
 
-* Problem of Interest
+* Domains where edge-costs are not known apriori
+
+#+begin_container-fluid
+#+begin_row-fluid
+#+begin_span9
+Example 1: *TSP with unknown edge costs*
+
++ *Edge cost* = pairwise distance between cities
+  + given apriori in the standard setting
+#+end_span9
+#+begin_span3
+[[png:TSP-with-weights]]
+#+end_span3
+#+end_row-fluid
+#+begin_row-fluid
+#+begin_span9
++ However, when the edge cost is *NOT given* ...
+  + Solve *O(N^2) shortest path problems (all pairs of cities)*
+  + *before* solving the TSP itself (N: number of cities)
+#+end_span9
+#+begin_span3
+[[png:TSP-without-weights]]
+#+end_span3
+#+end_row-fluid
+#+end_container-fluid
+
+#+begin_larger
++ *Practically, edge cost computation could dominate the search time.*
+#+end_larger
+
+* Domains where edge-costs are not known apriori
+
+Example 2: Multiple Worker Routing Problem (*Our main problem of interest*)
+
+[[png:mwrp]]
+
+** Multiple Worker Routing Problem (MWRP)
+
++ Worker initial locations $w_j$, patients locations $p_i$, *visit all patients*
++ Appointment time $a_i$, arrival time $t_i$, *minimize the sum of delays* $\sum \max(0, t_i - a_i)$
++ Travel time function $\tau(x,y,t)$ 　where $x,y \in P\cap W$
+  + $\tau$ 　depends on the *departure time* $t$
+    + (e.g. more buses in the morning, fewer around noon)
+  + Input size: $|\text{Num. locations}|\cdot|t|$, where $|t|\in [0, 86400 = 24\cdot 60 \cdot 60]$
+
+** DIJA Multi-modal Journey Planning Solver [Botea et.al. 2013]
+
+# + $\tau$ *is not known apriori*, should be computed dynamically
++ DIJA solver computes each query $\tau(x,y,t)$
++ DIJA could take ~100 seconds for each query (in the worst case)
++ Brute force precomputation of $\tau(x,y,t)\;$ is impractical, given the large number of queries
+
+#+begin_center
+|             | <c>                                |
+| City        | Num. locations in the roadmap data |
+|-------------+------------------------------------|
+| Dublin      | 301,638                            |
+| Montpellier | 152,949                            |
+| Rome        | 522,529                            |
+#+end_center
+
+# | city        | Num. locations in the roadmap data | segments | stops | routes | trips/day |
+# |-------------+------------------------------------+----------+-------+--------+-----------|
+# | Dublin      | 301,638                            | 319,846  | 4,739 |    120 | 7,308     |
+# | Montpellier | 152,949                            | 161,768  | 1,297 |     36 | 3,988     |
+# | Rome        | 522,529                            | 566,400  | 8,896 |    391 | 39,422    |
 
 
-* Hardness results :skip:
+** NP-hardness results                                                 :skip:
 
+Decision problem (is the total delay below some D ?)
 
-* Related work does not apply to this problem
+Reduction from Single Machine Total Tardiness Problem (SMTTP) (Du and Leung 1990)
 
+(Detail omitted due to time constraints)
 
-* DEA* algorithm
+* Initial Results: Search performance "does not matter"
+
+#+begin_container-fluid
+#+begin_row-fluid
+#+begin_span8
++ Trivial approach with A*
+  + Evaluate the edge cost using external solver DIJA
+  + Use the edge cost for computing g() value of A*
+  + The results of DIJA are cached (the same edge is never computed twice)
++ *90% of the runtime* is spent on DIJA
+  + *The /true bottleneck/ is in the edge cost computation!*
+#+end_span8
+#+begin_span4
+[[png:astar]]
+#+end_span4
+#+end_row-fluid
+#+end_container-fluid
+
+* Delayed Expansion A* (DEA*)
+
++ When the edge cost is computed by an external solver,
++ *Why don't you grab some additional information from it?*
++ This applies to most of the *hierarchical problems*,
+  + including transportation (like MWRP), motion planning (local path vs high-level task)
+
+* 
+
+* Related work: PEA* motivation does not apply to this problem
+
+Partial Expansion A* (Yoshizumi et.al. '00, Goldenberg et.al. '14)
+
+→ expands *all* successors (= requires every edge cost)
+
+→ discard some successors, in order to reduce memory usage
+
+→ Addresses the high branching factor in MSA (Multiple Sequence Alignment)
 
 
 * Experimental Results
